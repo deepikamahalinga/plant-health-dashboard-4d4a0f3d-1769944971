@@ -1,0 +1,39 @@
+// This is needed for TimescaleDB
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+model Location {
+  id          String      @id @default(uuid()) @db.Uuid
+  name        String
+  latitude    Decimal     @db.Decimal(10, 6)
+  longitude   Decimal     @db.Decimal(10, 6)
+  createdAt   DateTime    @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(6)
+  plantData   PlantData[]
+
+  @@index([latitude, longitude])
+}
+
+model PlantData {
+  id           String    @id @default(uuid()) @db.Uuid
+  timestamp    DateTime  @db.Timestamptz(6)
+  soilMoisture Decimal  @db.Decimal(5, 2)
+  locationId   String    @db.Uuid
+  createdAt    DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(6)
+  location     Location  @relation(fields: [locationId], references: [id])
+
+  @@index([timestamp])
+  @@index([locationId])
+  @@index([timestamp, locationId])
+}
+
+// Enable TimescaleDB extension
+extension TimescaleDB on schema public
